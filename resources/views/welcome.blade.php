@@ -31,22 +31,23 @@
                 <div class="card">
                     <h5 class="card-header">New URL</h5>
                     <div class="card-body">
-                        <h5 class="card-title">Enter a new url to be shortend</h5>
+                        <h5 class="card-title">Enter a new url to be shortend/redirected</h5>
+                        <p class="card-text">We will generate a new url that will redirect to this page.</p>
                         <div class="form-row align-items-center">
                             <div class="col-auto">
                                 <label class="sr-only" for="newURLInput">URL</label>
                                 <div class="input-group mb-2">
-                                    <div class="input-group-prepend">
-                                        <div class="input-group-text">{{ url('/') }}/</div>
-                                    </div>
-                                    <input type="text" class="form-control" id="newURLInput" placeholder="URL">
+                                    <input 
+                                        type="url" 
+                                        class="form-control" 
+                                        id="newURLInput"
+                                        placeholder="URL">
                                 </div>
                             </div>
                             <div class="col-auto">
                                 <button type="submit" class="btn btn-primary mb-2">Submit</button>
                             </div>
                         </div>
-
                     </div>
                 </div>
             </form>

@@ -24,39 +24,167 @@
         </style>
     </head>
     <body class="antialiased">
-        <div class="relative flex items-top justify-center min-h-screen bg-gray-100 dark:bg-gray-900 sm:items-center py-4 sm:pt-0">
-            
-            <!--  New URL Form -->
-            <form id="newURL">
-                <div class="card">
-                    <h5 class="card-header">New URL</h5>
-                    <div class="card-body">
-                        <h5 class="card-title">Enter a new url to be shortend/redirected</h5>
-                        <p class="card-text">We will generate a new url that will redirect to this page.</p>
-                        <div class="form-row align-items-center">
-                            <div class="col-auto">
-                                <label class="sr-only" for="newURLInput">URL</label>
-                                <div class="input-group mb-2">
-                                    <input 
-                                        type="url" 
-                                        class="form-control" 
-                                        id="newURLInput"
-                                        placeholder="URL">
+        <div class="relative flex flex-column justify-center min-h-screen bg-gray-100 dark:bg-gray-900 sm:items-center py-4 sm:pt-0">
+        
+            <div class="row">
+                <!--  New URL Form -->
+                <form id="newURL">
+                    @csrf
+                    <div class="card">
+                        <h5 class="card-header">New URL</h5>
+                        <div class="card-body">
+                            <div id="urlFormAlert" class="alert alert-success" style="display: none;" role="alert"></div>
+                            <h5 class="card-title">Enter a new url to be shortend/redirected</h5>
+                            <p class="card-text">We will generate a new url that will redirect to this page.</p>
+                            <div class="form-row align-items-center">
+                                <div class="col-12">
+                                    <label for="slug">Enter Slug</label>
+                                    <div class="input-group has-validation mb-2">
+                                        <div class="input-group-prepend">
+                                            <div class="input-group-text">{{ url('/') }}/redirects/</div>
+                                        </div>
+                                        <input 
+                                            type="text" 
+                                            class="form-control" 
+                                            id="custom_slug"
+                                            name="custom_slug"
+                                            placeholder="Slug">
+                                    </div>
+                                    <div class="invalid-feedback"></div>
                                 </div>
                             </div>
-                            <div class="col-auto">
-                                <button type="submit" class="btn btn-primary mb-2">Submit</button>
+                            <div class="form-row align-items-center">
+                                <div class="col-12">
+                                    <label for="newURLInput">Enter URL</label>
+                                    <div class="input-group has-validation mb-2">
+                                        <input 
+                                            type="url" 
+                                            class="form-control" 
+                                            id="newURLInput"
+                                            name="redirect_to"
+                                            placeholder="URL">
+                                    </div>
+                                    <div class="invalid-feedback"></div>
+                                </div>
+                            </div>
+                            <div class="form-row align-items-center">
+                                <div class="col-auto">
+                                    <button type="submit" class="btn btn-primary mb-2">Submit</button>
+                                </div>
                             </div>
                         </div>
                     </div>
+                </form>
+                <!--  /New URL Form -->
+            </div>
+
+            <br /><br />
+
+            <div class="row">
+                <!--  Shortend URLS -->
+                <div class="card">
+                    <h5 class="card-header">Current Shortend URLS</h5>
+                    <div class="card-body">
+                        <p class="card-text">Here is a list of the current shortend URLs. Click to toggle between the shortend url and the full url.</p>
+
+                        <table class="table">
+                            <thead>
+                              <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">URL</th>
+                                <th scope="col">Go</th>
+                              </tr>
+                            </thead>
+                            <tbody id="urlTableBody">
+                                @foreach ($urls as $url)
+                                    <tr>
+                                        <th scope="row">{{ $url->id }}</th>
+                                        <td>
+                                            <a 
+                                                href="#" 
+                                                title="{{ $url->redirect_to }}"
+                                                data-full-url="{{ $url->redirect_to }}"
+                                                data-custom-url="{{ url('/') }}/redirects/{{ $url->custom_slug }}"
+                                                class="expand-url"
+                                                >{{ url('/') }}/redirects/{{ $url->custom_slug }}</a>
+                                        </td>
+                                        <td>
+                                            <a 
+                                                href="{{ $url->redirect_to }}" 
+                                                target="_blank"
+                                                class="btn btn-primary">Original Link</a>
+                                            <a 
+                                                href="{{ url('/') }}/redirects/{{ $url->custom_slug }}" 
+                                                target="_blank"
+                                                class="btn btn-success">Custom Link</a>
+                                        </td>
+                                    </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+
+                    </div>
                 </div>
-            </form>
-            <!--  /New URL Form -->
+                <!--  /Shortend URLS -->
+            </div>
 
         </div>
 
         <!-- Scripts -->
-        <script src="{{ asset('js/app.js') }}" defer></script>
+        <script src="https://code.jquery.com/jquery-1.12.4.min.js" integrity="sha256-ZosEbRLbNQzLpnKIkEdrPv7lOy9C27hHQ+Xp8a4MxAQ=" crossorigin="anonymous"></script>
+        
+        <!-- Script -->
+        <script type="text/javascript">
+            $(document).ready(function() {
+                const urlFormAlert = $('#urlFormAlert');
+
+                // expand url
+                $('body').on('click', '.expand-url', function(event) {
+                    event.preventDefault();
+                    $(this).toggleClass('url-expanded');
+                    $(this).html($(this).hasClass('url-expanded') ? 
+                        $(this).attr('data-full-url') : $(this).attr('data-custom-url'));
+                });
+
+                // submit new url form
+                $('#newURL').on('submit', function(event) {
+                    event.preventDefault();
+
+                    let urlForm = $(this).serializeArray();
+                    $(this).find('input').removeClass('is-invalid');
+                    $(this).find('.invalid-feedback').hide();
+
+                    $.ajax({
+                        url: "{{ url('/api/url/add') }}",
+                        method: "POST",
+                        dataType: "JSON",
+                        data: urlForm,
+                        success: function(response) {
+                            if ( response.success ) {
+                                urlFormAlert.removeClass('alert-danger')
+                                    .addClass('alert-success')
+                                        .html(response.message).show();
+
+                                // append new table row
+                                $('#urlTableBody').append(response.data);
+                            }
+                            else {
+                                $.each(response.message, function(key, value) {
+                                    let curInput = $('input[name="' + key + '"]');
+                                    curInput.addClass('is-invalid');
+                                    curInput.parent().parent()
+                                        .find('.invalid-feedback').html(value).show();
+                                });
+
+                                urlFormAlert.removeClass('alert-success')
+                                    .addClass('alert-danger')
+                                        .html(response.data).show();
+                            }
+                        }
+                    });
+                });
+            });
+        </script>
 
     </body>
 </html>
